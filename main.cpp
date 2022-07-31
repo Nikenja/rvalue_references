@@ -3,44 +3,8 @@
 #include <type_traits>
 #include <boost/type_index.hpp>
 
-// create own move function
-
-namespace RmNs
-{
-
-template <typename T>
-struct remove_reference
-{
-    typedef T type;
-};
-
-template <typename T>
-struct remove_reference<T&>
-{
-    typedef T type;
-};
-
-template <typename T>
-struct remove_reference<T&&>
-{
-    typedef T type;
-};
-
-} // namespace RmNs
-
-namespace MoveNs
-{
-
-template <typename T>
-typename RmNs::remove_reference<T>::type&& move(T&& arg)
-{
-    std::cout << "arg's type: " <<
-        boost::typeindex::type_id_with_cvr<decltype(arg)>().pretty_name() << '\n';
-    return static_cast<typename RmNs::remove_reference<T>::type&&>(arg);
-}
-
-} // namespace MoveNs
-
+#include "move.h"
+#include "type_deduction.h"
 
 class TestSubject
 {
@@ -51,7 +15,7 @@ TestSubject get_test_subject()
     return TestSubject();
 }
 
-int main()
+void test_move()
 {
     {
         TestSubject lvalue;
@@ -74,5 +38,65 @@ int main()
         std::cout << '\n';
     }
 
+    std::cout << '\n';
+}
+
+void test_type_deduction()
+{
+    {
+        std::cout << "with lvalue\n";
+        TestSubject lvalue;
+        reference(lvalue);
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with lvalue&\n";
+        TestSubject temp;
+        TestSubject& lvalue(temp);
+        reference(lvalue);
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with lvalue\n";
+        TestSubject lvalue;
+        const_reference(lvalue);
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with rvalue\n";
+        const_reference(get_test_subject());
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with lvalue\n";
+        TestSubject lvalue;
+        value(lvalue);
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with lvalue&\n";
+        TestSubject temp;
+        TestSubject& lvalue = temp;
+        value(lvalue);
+        std::cout << '\n';
+    }
+
+    {
+        std::cout << "with rvalue\n";
+        value(get_test_subject());
+        std::cout << '\n';
+    }
+
+}
+
+int main()
+{
+    test_move();
+    test_type_deduction();
     return 0;
 }
